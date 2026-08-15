@@ -304,7 +304,7 @@ git remote -v
 git branch --show-current
 ```
 
-设置代理并推送：
+设置代理并通过 SSH 推送：
 
 ```powershell
 $env:ALL_PROXY = "http://127.0.0.1:7897"
@@ -312,7 +312,13 @@ $env:all_proxy = $env:ALL_PROXY
 git push -u origin main
 ```
 
-推送失败时先区分：认证失败、代理失败、远程非空、分支保护或网络超时。不要使用 `git push --force` 覆盖远程历史。
+如果使用 GitHub Personal Access Token（PAT），不要将令牌写入源码、文档、Git URL、Maven 配置或 Git 提交。令牌只应短暂设置在当前终端，或由 Git Credential Manager 保存：
+
+```powershell
+$env:GITHUB_TOKEN = "<new-token>"
+```
+
+令牌泄露后应立即在 GitHub 的 Settings -> Developer settings -> Personal access tokens 中撤销，并生成仅包含所需仓库权限的新令牌。推送失败时先区分：认证失败、代理失败、远程非空、分支保护或网络超时。不要使用 `git push --force` 覆盖远程历史。
 
 ## 12. 什么时候引入框架
 
