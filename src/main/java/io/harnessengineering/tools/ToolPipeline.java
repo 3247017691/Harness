@@ -18,6 +18,11 @@ public final class ToolPipeline {
         this.registry = Objects.requireNonNull(registry, "registry");
     }
 
+    /** @return the tool schemas currently advertised by this pipeline. */
+    public List<ToolDefinition> definitions() {
+        return registry.definitions();
+    }
+
     public synchronized Effect use(ToolMiddleware entry) {
         Objects.requireNonNull(entry, "entry");
         middleware.add(entry);
