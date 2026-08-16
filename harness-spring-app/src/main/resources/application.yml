@@ -1,0 +1,3 @@
+harness:
+  session-dir: .sessions
+  http-port: 8080

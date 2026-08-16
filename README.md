@@ -2,6 +2,11 @@
 
 A Java 21 runtime foundation that implements composable plugins, typed services, reversible effects, lifecycle fibers, and event dispatching.
 
+## Modules
+
+- `harness-core` — framework-free runtime: plugins, services, sessions, LLM, tools, agents, HTTP/SSE, CLI.
+- `harness-spring-app` — Spring Boot application assembly over the core (adapter depends on core, never the reverse).
+
 ## Prerequisites
 
 - JDK 21 or later
@@ -13,6 +18,26 @@ A Java 21 runtime foundation that implements composable plugins, typed services,
 mvn test
 mvn -q package
 ```
+
+## Spring Boot adapter
+
+Run the assembled application with an echo provider and a demo agent:
+
+```powershell
+mvn -q package
+$cp = "harness-spring-app/target/harness-spring-app-0.1.0-SNAPSHOT.jar" + ((Get-ChildItem .m2 -Recurse -Filter *.jar | ForEach-Object { ";$_" }) -join "")
+java -cp $cp io.harnessengineering.app.HarnessApplication
+```
+
+Configuration (`application.yml`):
+
+```yaml
+harness:
+  session-dir: .sessions
+  http-port: 8080
+```
+
+The adapter wires the JSONL `SessionStore`, starts the HTTP/SSE server, and runs a demo agent on session `demo`.
 
 ## HTTP API
 
@@ -45,11 +70,11 @@ The web layer only reads Session state; it never mutates Agent loop internals di
 
 ## CLI
 
-Package the JAR, then append or replay a persisted Session event log from the workspace root:
+Package the core JAR, then append or replay a persisted Session event log from the workspace root:
 
 ```powershell
 mvn -q package
-$cp = "target/harness-engineering-0.1.0-SNAPSHOT.jar" + ((Get-ChildItem .m2 -Recurse -Filter *.jar | ForEach-Object { ";$_" }) -join "")
+$cp = "harness-core/target/harness-core-0.1.0-SNAPSHOT.jar" + ((Get-ChildItem .m2 -Recurse -Filter *.jar | ForEach-Object { ";$_" }) -join "")
 java -cp $cp io.harnessengineering.cli.HarnessCli append .sessions demo user "Hello"
 java -cp $cp io.harnessengineering.cli.HarnessCli append .sessions demo assistant "Hi there"
 java -cp $cp io.harnessengineering.cli.HarnessCli replay .sessions demo
@@ -62,5 +87,6 @@ The runtime now includes:
 - typed service registry, plugin lifecycle fibers, and synchronous event semantics;
 - declarative YAML plugin composition with isolated nested groups;
 - append-only Session event logs with in-memory and JSONL persistence;
-- provider-neutral LLM streaming, parallel Tool execution with retry, and an Agent turn loop;
-- a CLI and a read-only HTTP/SSE server over persisted session logs.
+- provider-neutral LLM streaming, parallel Tool execution with retry and cancellation convergence, and an Agent turn loop;
+- a CLI and a read-only HTTP/SSE server (plus browser client) over persisted session logs;
+- a Spring Boot application assembly in `harness-spring-app`.

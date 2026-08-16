@@ -139,25 +139,26 @@ turn/start
 ## 5. 推荐目录
 
 ```text
-HarnessEngineering/
+HarnessEngineering/                  # 父 POM（多模块）
 ├── pom.xml
 ├── README.md
 ├── PLAN.md
 ├── GUIDE.md
-├── src/main/java/io/harnessengineering/
-│   ├── core/          # Context、Plugin、Fiber、EventBus
-│   ├── session/       # Session 和事件投影
-│   ├── llm/           # 模型适配器接口和流
-│   ├── tools/         # Tool 定义和执行管线
-│   ├── agent/         # Agent、Inbox、Loop
-│   ├── config/        # YAML 配置与 Loader
-│   └── cli/           # 命令行入口
-└── src/test/java/
-    ├── core/
-    ├── session/
-    ├── llm/
-    ├── tools/
-    └── agent/
+├── harness-core/                    # 框架无关的核心运行时
+│   ├── pom.xml
+│   └── src/main/java/io/harnessengineering/
+│       ├── core/          # Context、Plugin、Fiber、EventBus、CancellationToken
+│       ├── session/       # Session 和事件投影、内存/JSONL 后端
+│       ├── llm/           # 模型适配器接口和流
+│       ├── tools/         # Tool 定义、并行执行管线、重试
+│       ├── agent/         # Agent、Inbox、Loop
+│       ├── config/        # YAML 配置与 Loader
+│       ├── http/          # 只读 HTTP/SSE 服务
+│       └── cli/           # 命令行入口
+│   └── src/test/java/
+└── harness-spring-app/              # Spring Boot 组装层（适配层依赖核心）
+    ├── pom.xml
+    └── src/main/java/io/harnessengineering/app/
 ```
 
 ## 6. 技术决策
@@ -204,3 +205,17 @@ git push -u origin main
 ## 9. 第一阶段完成定义
 
 Phase 1 完成的标准不是代码数量，而是以下行为同时成立：插件可以声明依赖；依赖未满足时不执行；服务出现时自动激活；服务替换时旧副作用先清理；清理后插件重新执行；事件 Waterfall 能被中间件拦截；关闭管理器后没有仍然注册的监听器或服务。
+
+## 10. 实施进度
+
+- Phase 0 工程骨架：完成（Maven 多模块、JUnit 5、README）。
+- Phase 1 核心运行时：完成（Context、ServiceKey/Registry、Plugin/Fiber/PluginManager、Effect、EventBus）。
+- Phase 2 配置和组合：完成（YAML 模型、插件工厂、PluginId、校验、嵌套组与隔离作用域）。
+- Phase 3 Session 事件日志：完成（SessionId、envelope、序号、消息投影、内存与 JSONL 后端）。
+- Phase 4 LLM 与 Tool：完成（LlmProvider、流式 chunk、Tool 定义/注册/执行、结构化失败）。
+- Phase 5 Agent Loop：完成（Inbox、Turn/Step、串行与并行工具循环、取消、关闭等待）。
+- Phase 6 命令行和 Web：完成（CLI、HTTP API、SSE、浏览器客户端）。
+- 延后能力：完成（并行工具调用、取消收敛、工具重试 RetryPolicy）。
+- 框架适配层：完成（`harness-spring-app`，Spring Boot 组装，方向为核心 ← 适配层）。
+
+后续方向：LLM 请求超时/取消接入、Spring MVC/Tomcat Web 栈、SQLite 后端、可观测性。

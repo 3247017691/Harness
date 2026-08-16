@@ -286,6 +286,8 @@ mvn test
 mvn -q package
 ```
 
+多模块布局：`harness-core`（框架无关的核心运行时）和 `harness-spring-app`（Spring Boot 组装层）。根目录构建会依次验证两个模块。
+
 代码完成后检查：
 
 ```powershell
@@ -322,15 +324,21 @@ $env:GITHUB_TOKEN = "<new-token>"
 
 ## 12. 什么时候引入框架
 
-只有当核心测试稳定后才引入：
+核心测试稳定后才引入框架。当前状态：
 
-- Spring Boot：应用启动、HTTP、配置和可观测性。
-- Reactor/Mutiny：需要真正的异步流组合时。
-- Jackson：配置、Session 持久化和 JSON-RPC。
-- SQLite：需要可查询的 Session 存储时。
+- **Spring Boot（已引入）**：`harness-spring-app` 模块用 Spring Boot 提供应用启动、配置和装配，HTTP 仍使用 JDK `HttpServer`（避免 Tomcat/Spring MVC 的额外依赖）。如果后续需要标准 Web 栈，可以在该模块追加 `spring-boot-starter-web`，依赖方向保持不变。
+- **Reactor/Mutiny**：需要真正的异步流组合时再引入。
+- **Jackson**：已用于配置、Session 持久化和 JSON 输出。
+- **SQLite**：需要可查询的 Session 存储时再引入。
 
 引入框架时保持依赖方向：框架适配层依赖 Harness 核心，核心不能反向依赖 Web 或 Spring。
 
 ## 13. 当前工作边界
 
-本阶段只生成计划与指导文档。用户在 `D:\.Workspace\HarnessEngineering` 重新打开工作区后，再执行源码初始化、测试、Git 提交和 GitHub 推送。新工作区应先读取本文件和 `PLAN.md`，然后从 Phase 0 开始。 
+截至当前进度，已完成：
+
+- Phase 0 工程骨架、Phase 1 核心运行时、Phase 2 配置与插件组合、Phase 3 Session 事件日志（内存 + JSONL）、Phase 4 LLM 与 Tool、Phase 5 Agent Loop、Phase 6 CLI + HTTP/SSE + 浏览器客户端；
+- 延后能力：并行工具调用、取消收敛、工具重试；
+- 应用框架适配层：`harness-spring-app`（Spring Boot 装配，含配置属性、HttpServer/SessionStore Bean 和演示 Agent）。
+
+后续可选方向：并发与取消的边界测试补强、LLM 请求超时/取消接入、Spring MVC/Tomcat Web 栈、SQLite 后端、可观测性（指标/日志）。新工作区先读取本文件和 `PLAN.md` 了解现状，再继续下一步。
