@@ -14,7 +14,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -33,11 +32,7 @@ class HarnessApplicationTest {
     void bootsTomcatAndServesSessionState() throws Exception {
         SpringApplication application = new SpringApplication(HarnessApplication.class);
         application.setBannerMode(Banner.Mode.OFF);
-        application.setDefaultProperties(Map.of(
-                "harness.session-dir", directory.toString(),
-                "server.port", "0",
-                "server.shutdown", "immediate"));
-        try (ConfigurableApplicationContext context = application.run()) {
+        try (ConfigurableApplicationContext context = application.run(arguments())) {
             int port = ((WebServerApplicationContext) context).getWebServer().getPort();
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
             String base = "http://127.0.0.1:" + port;
@@ -65,11 +60,7 @@ class HarnessApplicationTest {
     void streamsEventsOverSse() throws Exception {
         SpringApplication application = new SpringApplication(HarnessApplication.class);
         application.setBannerMode(Banner.Mode.OFF);
-        application.setDefaultProperties(Map.of(
-                "harness.session-dir", directory.toString(),
-                "server.port", "0",
-                "server.shutdown", "immediate"));
-        try (ConfigurableApplicationContext context = application.run()) {
+        try (ConfigurableApplicationContext context = application.run(arguments())) {
             int port = ((WebServerApplicationContext) context).getWebServer().getPort();
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
 
@@ -106,5 +97,13 @@ class HarnessApplicationTest {
             assertTrue(joined.contains("live-answer"), "missing live-answer; received:\n" + joined);
             assertTrue(joined.contains("event:session-event"), "missing sse marker; received:\n" + joined);
         }
+    }
+
+    private String[] arguments() {
+        return new String[] {
+                "--harness.session-dir=" + directory,
+                "--server.port=0",
+                "--server.shutdown=immediate"
+        };
     }
 }
