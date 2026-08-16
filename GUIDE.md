@@ -326,7 +326,7 @@ $env:GITHUB_TOKEN = "<new-token>"
 
 核心测试稳定后才引入框架。当前状态：
 
-- **Spring Boot（已引入）**：`harness-spring-app` 模块用 Spring Boot 提供应用启动、配置和装配，HTTP 仍使用 JDK `HttpServer`（避免 Tomcat/Spring MVC 的额外依赖）。如果后续需要标准 Web 栈，可以在该模块追加 `spring-boot-starter-web`，依赖方向保持不变。
+- **Spring Boot（已引入）**：`harness-spring-app` 模块提供应用启动、配置和装配；Web 层使用 `spring-boot-starter-web`（Tomcat + Spring MVC，SSE 用 `SseEmitter`）。核心模块的 JDK `HttpServer` 保留为框架无关选项，两种 HTTP 层都只读 Session 状态，依赖方向保持不变（核心不依赖 Spring）。
 - **Reactor/Mutiny**：需要真正的异步流组合时再引入。
 - **Jackson**：已用于配置、Session 持久化和 JSON 输出。
 - **SQLite**：需要可查询的 Session 存储时再引入。
@@ -341,4 +341,4 @@ $env:GITHUB_TOKEN = "<new-token>"
 - 延后能力：并行工具调用、取消收敛、工具重试；
 - 应用框架适配层：`harness-spring-app`（Spring Boot 装配，含配置属性、HttpServer/SessionStore Bean 和演示 Agent）。
 
-后续可选方向：并发与取消的边界测试补强、LLM 请求超时/取消接入、Spring MVC/Tomcat Web 栈、SQLite 后端、可观测性（指标/日志）。新工作区先读取本文件和 `PLAN.md` 了解现状，再继续下一步。
+后续可选方向：并发与取消的边界测试补强、LLM 请求超时/取消接入、SQLite 后端、可观测性（指标/日志）。新工作区先读取本文件和 `PLAN.md` 了解现状，再继续下一步。

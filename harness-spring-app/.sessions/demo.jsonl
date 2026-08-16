@@ -1,0 +1,96 @@
+{"sequence":1,"time":1786894718.127763900,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":2,"time":1786894718.183763700,"type":"turn/start","data":{"turn":1}}
+{"sequence":3,"time":1786894718.186764900,"type":"step/start","data":{"step":1}}
+{"sequence":4,"time":1786894718.191765900,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":5,"time":1786894718.194764900,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":6,"time":1786894718.197763400,"type":"step/end","data":{"status":"completed"}}
+{"sequence":7,"time":1786894718.200764600,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":8,"time":1786894718.910522600,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":9,"time":1786894718.914522800,"type":"turn/start","data":{"turn":2}}
+{"sequence":10,"time":1786894718.917524200,"type":"step/start","data":{"step":2}}
+{"sequence":11,"time":1786894718.920555700,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":12,"time":1786894718.923520700,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":13,"time":1786894718.925521500,"type":"step/end","data":{"status":"completed"}}
+{"sequence":14,"time":1786894718.929523000,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":15,"time":1786894736.904130000,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":16,"time":1786894736.920128100,"type":"turn/start","data":{"turn":3}}
+{"sequence":17,"time":1786894736.922128300,"type":"step/start","data":{"step":3}}
+{"sequence":18,"time":1786894736.928128000,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":19,"time":1786894736.931127800,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":20,"time":1786894736.933129800,"type":"step/end","data":{"status":"completed"}}
+{"sequence":21,"time":1786894736.935128800,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":22,"time":1786894737.637617000,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":23,"time":1786894737.642615800,"type":"turn/start","data":{"turn":4}}
+{"sequence":24,"time":1786894737.646617500,"type":"step/start","data":{"step":4}}
+{"sequence":25,"time":1786894737.648615600,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":26,"time":1786894737.650617500,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":27,"time":1786894737.654617600,"type":"step/end","data":{"status":"completed"}}
+{"sequence":28,"time":1786894737.657617900,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":29,"time":1786894769.042710700,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":30,"time":1786894769.061711000,"type":"turn/start","data":{"turn":5}}
+{"sequence":31,"time":1786894769.064709000,"type":"step/start","data":{"step":5}}
+{"sequence":32,"time":1786894769.070710700,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":33,"time":1786894769.074709900,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":34,"time":1786894769.077709100,"type":"step/end","data":{"status":"completed"}}
+{"sequence":35,"time":1786894769.079708300,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":36,"time":1786894769.491776300,"type":"assistant/message","data":{"role":"assistant","content":"live-answer"}}
+{"sequence":37,"time":1786894800.069597100,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":38,"time":1786894800.079595900,"type":"turn/start","data":{"turn":6}}
+{"sequence":39,"time":1786894800.085596800,"type":"step/start","data":{"step":6}}
+{"sequence":40,"time":1786894800.091597500,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":41,"time":1786894800.102599100,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":42,"time":1786894800.111618200,"type":"step/end","data":{"status":"completed"}}
+{"sequence":43,"time":1786894800.117614700,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":44,"time":1786894869.860591400,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":45,"time":1786894869.881591700,"type":"turn/start","data":{"turn":7}}
+{"sequence":46,"time":1786894869.885620100,"type":"step/start","data":{"step":7}}
+{"sequence":47,"time":1786894869.890588500,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":48,"time":1786894869.893591700,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":49,"time":1786894869.897590100,"type":"step/end","data":{"status":"completed"}}
+{"sequence":50,"time":1786894869.900589400,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":51,"time":1786894870.321740000,"type":"assistant/message","data":{"role":"assistant","content":"live-answer"}}
+{"sequence":52,"time":1786894976.334266800,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":53,"time":1786894976.351251200,"type":"turn/start","data":{"turn":8}}
+{"sequence":54,"time":1786894976.354248600,"type":"step/start","data":{"step":8}}
+{"sequence":55,"time":1786894976.358251200,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":56,"time":1786894976.361250500,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":57,"time":1786894976.364252700,"type":"step/end","data":{"status":"completed"}}
+{"sequence":58,"time":1786894976.367250500,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":59,"time":1786894976.784281300,"type":"assistant/message","data":{"role":"assistant","content":"live-answer"}}
+{"sequence":60,"time":1786894977.092671700,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":61,"time":1786894977.097669900,"type":"turn/start","data":{"turn":9}}
+{"sequence":62,"time":1786894977.101670700,"type":"step/start","data":{"step":9}}
+{"sequence":63,"time":1786894977.104672600,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":64,"time":1786894977.108668900,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":65,"time":1786894977.110670200,"type":"step/end","data":{"status":"completed"}}
+{"sequence":66,"time":1786894977.113672400,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":67,"time":1786895000.315454200,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":68,"time":1786895000.334351000,"type":"turn/start","data":{"turn":10}}
+{"sequence":69,"time":1786895000.338350700,"type":"step/start","data":{"step":10}}
+{"sequence":70,"time":1786895000.344352100,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":71,"time":1786895000.349349500,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":72,"time":1786895000.352350800,"type":"step/end","data":{"status":"completed"}}
+{"sequence":73,"time":1786895000.354350400,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":74,"time":1786895000.774501800,"type":"assistant/message","data":{"role":"assistant","content":"live-answer"}}
+{"sequence":75,"time":1786895001.050622300,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":76,"time":1786895001.055621400,"type":"turn/start","data":{"turn":11}}
+{"sequence":77,"time":1786895001.060622700,"type":"step/start","data":{"step":11}}
+{"sequence":78,"time":1786895001.062621800,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":79,"time":1786895001.065621900,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":80,"time":1786895001.068623000,"type":"step/end","data":{"status":"completed"}}
+{"sequence":81,"time":1786895001.071623400,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":82,"time":1786895018.165390300,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":83,"time":1786895018.183394000,"type":"turn/start","data":{"turn":12}}
+{"sequence":84,"time":1786895018.187390200,"type":"step/start","data":{"step":12}}
+{"sequence":85,"time":1786895018.194395500,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":86,"time":1786895018.197390300,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":87,"time":1786895018.200391900,"type":"step/end","data":{"status":"completed"}}
+{"sequence":88,"time":1786895018.203391100,"type":"turn/end","data":{"status":"completed"}}
+{"sequence":89,"time":1786895018.615286600,"type":"assistant/message","data":{"role":"assistant","content":"live-answer"}}
+{"sequence":90,"time":1786895018.899024800,"type":"user/message","data":{"role":"user","content":"hello from spring"}}
+{"sequence":91,"time":1786895018.905026900,"type":"turn/start","data":{"turn":13}}
+{"sequence":92,"time":1786895018.907026400,"type":"step/start","data":{"step":13}}
+{"sequence":93,"time":1786895018.910025900,"type":"assistant/chunk","data":{"text":"Echo: hello from spring","done":false}}
+{"sequence":94,"time":1786895018.914024300,"type":"assistant/message","data":{"role":"assistant","content":"Echo: hello from spring"}}
+{"sequence":95,"time":1786895018.918025900,"type":"step/end","data":{"status":"completed"}}
+{"sequence":96,"time":1786895018.921024900,"type":"turn/end","data":{"status":"completed"}}

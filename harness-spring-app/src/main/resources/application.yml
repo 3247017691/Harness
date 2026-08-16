@@ -1,3 +1,5 @@
+server:
+  port: 8080
+
 harness:
   session-dir: .sessions
-  http-port: 8080

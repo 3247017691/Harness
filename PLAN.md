@@ -216,6 +216,6 @@ Phase 1 完成的标准不是代码数量，而是以下行为同时成立：插
 - Phase 5 Agent Loop：完成（Inbox、Turn/Step、串行与并行工具循环、取消、关闭等待）。
 - Phase 6 命令行和 Web：完成（CLI、HTTP API、SSE、浏览器客户端）。
 - 延后能力：完成（并行工具调用、取消收敛、工具重试 RetryPolicy）。
-- 框架适配层：完成（`harness-spring-app`，Spring Boot 组装，方向为核心 ← 适配层）。
+- 框架适配层：完成（`harness-spring-app`，Spring Boot 组装，含 Tomcat/Spring MVC Web 层；方向为核心 ← 适配层）。
 
-后续方向：LLM 请求超时/取消接入、Spring MVC/Tomcat Web 栈、SQLite 后端、可观测性。
+后续方向：LLM 请求超时/取消接入、SQLite 后端、可观测性。

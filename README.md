@@ -21,7 +21,7 @@ mvn -q package
 
 ## Spring Boot adapter
 
-Run the assembled application with an echo provider and a demo agent:
+Run the assembled application (Tomcat + Spring MVC) with an echo provider and a demo agent:
 
 ```powershell
 mvn -q package
@@ -32,16 +32,18 @@ java -cp $cp io.harnessengineering.app.HarnessApplication
 Configuration (`application.yml`):
 
 ```yaml
+server:
+  port: 8080
+
 harness:
   session-dir: .sessions
-  http-port: 8080
 ```
 
-The adapter wires the JSONL `SessionStore`, starts the HTTP/SSE server, and runs a demo agent on session `demo`.
+The adapter wires the JSONL `SessionStore`, serves the read-only Session API and SSE through Spring MVC, and runs a demo agent on session `demo`.
 
 ## HTTP API
 
-The read-only HTTP server exposes Session state over the JDK `HttpServer` (no framework dependency). Start it programmatically with a `SessionStore`:
+The read-only Session API is served by the Spring MVC adapter. A framework-free variant also exists in `harness-core` over the JDK `HttpServer` (no framework dependency); start it programmatically with a `SessionStore`:
 
 ```java
 try (HarnessHttpServer server = new HarnessHttpServer(new JsonlSessionStore(Path.of(".sessions")), 8080)) {
@@ -89,4 +91,4 @@ The runtime now includes:
 - append-only Session event logs with in-memory and JSONL persistence;
 - provider-neutral LLM streaming, parallel Tool execution with retry and cancellation convergence, and an Agent turn loop;
 - a CLI and a read-only HTTP/SSE server (plus browser client) over persisted session logs;
-- a Spring Boot application assembly in `harness-spring-app`.
+- a Spring Boot application assembly in `harness-spring-app` (Tomcat + Spring MVC, SSE via `SseEmitter`).
