@@ -14,6 +14,31 @@ mvn test
 mvn -q package
 ```
 
+## HTTP API
+
+The read-only HTTP server exposes Session state over the JDK `HttpServer` (no framework dependency). Start it programmatically with a `SessionStore`:
+
+```java
+try (HarnessHttpServer server = new HarnessHttpServer(new JsonlSessionStore(Path.of(".sessions")), 8080)) {
+    server.start();
+}
+```
+
+Endpoints:
+
+```text
+GET /sessions/{id}             committed events as JSON
+GET /sessions/{id}/messages    derived model messages as JSON
+GET /sessions/{id}/stream      SSE stream (replays, then follows live events)
+```
+
+```powershell
+curl http://127.0.0.1:8080/sessions/demo
+curl -N http://127.0.0.1:8080/sessions/demo/stream
+```
+
+The web layer only reads Session state; it never mutates Agent loop internals directly.
+
 ## CLI
 
 Package the JAR, then append or replay a persisted Session event log from the workspace root:
@@ -34,4 +59,4 @@ The runtime now includes:
 - declarative YAML plugin composition with isolated nested groups;
 - append-only Session event logs with in-memory and JSONL persistence;
 - provider-neutral LLM streaming, serial Tool execution, and an Agent turn loop;
-- a CLI for writing and replaying persisted session logs.
+- a CLI and a read-only HTTP/SSE server over persisted session logs.
