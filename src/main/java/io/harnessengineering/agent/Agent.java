@@ -2,6 +2,7 @@ package io.harnessengineering.agent;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.harnessengineering.core.CancellationToken;
 import io.harnessengineering.llm.LlmProvider;
 import io.harnessengineering.llm.LlmRequest;
 import io.harnessengineering.llm.LlmSessionWriter;
@@ -16,7 +17,8 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * Single-owner virtual-thread agent that turns inbox messages into model steps and
- * serial tool calls. Every visible transition is recorded in the session log.
+ * tool calls executed with cancellation-aware parallelism. Every visible transition
+ * is recorded in the session log.
  */
 public final class Agent implements AutoCloseable {
     private final EventLogSession session;
@@ -125,11 +127,11 @@ public final class Agent implements AutoCloseable {
                 LlmRequest request = new LlmRequest(provider.providerId(), model, mergeHistory(input), tools.definitions());
                 LlmSessionWriter.AssistantResponse response = new LlmSessionWriter(session).stream(provider, request);
                 token.throwIfCancelled();
-                if (response.toolCall() == null) {
+                if (response.toolCalls().isEmpty()) {
                     session.append(SessionEventTypes.STEP_END, marker("status", "completed"));
                     return;
                 }
-                tools.execute(List.of(response.toolCall()), session);
+                tools.executeParallel(response.toolCalls(), session, token);
                 session.append(SessionEventTypes.STEP_END, marker("status", "tool-executed"));
                 input = new ArrayList<>(inbox.claimNextStep());
             }

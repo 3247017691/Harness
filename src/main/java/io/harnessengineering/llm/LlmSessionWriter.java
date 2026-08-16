@@ -6,6 +6,8 @@ import io.harnessengineering.session.EventLogSession;
 import io.harnessengineering.session.Message;
 import io.harnessengineering.session.SessionEventTypes;
 import io.harnessengineering.tools.ToolCall;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -22,13 +24,13 @@ public final class LlmSessionWriter {
      *
      * @param provider provider to invoke
      * @param request request sent to provider
-     * @return assembled response, including a tool call when emitted
+     * @return assembled response, including any tool calls emitted in stream order
      */
     public AssistantResponse stream(LlmProvider provider, LlmRequest request) {
         Objects.requireNonNull(provider, "provider");
         Objects.requireNonNull(request, "request");
         StringBuilder text = new StringBuilder();
-        ToolCall toolCall = null;
+        List<ToolCall> toolCalls = new ArrayList<>();
         try (Stream<StreamChunk> chunks = provider.stream(request)) {
             for (StreamChunk chunk : chunks.toList()) {
                 ObjectNode event = JsonNodeFactory.instance.objectNode()
@@ -38,7 +40,7 @@ public final class LlmSessionWriter {
                     event.put("toolCallId", chunk.toolCallId());
                     event.put("toolName", chunk.toolName());
                     event.put("arguments", chunk.toolArguments());
-                    toolCall = new ToolCall(chunk.toolCallId(), chunk.toolName(), chunk.toolArguments());
+                    toolCalls.add(new ToolCall(chunk.toolCallId(), chunk.toolName(), chunk.toolArguments()));
                 }
                 session.append(SessionEventTypes.ASSISTANT_CHUNK, event);
                 text.append(chunk.text());
@@ -48,12 +50,13 @@ public final class LlmSessionWriter {
                 .put("role", "assistant")
                 .put("content", text.toString());
         session.append(SessionEventTypes.ASSISTANT_MESSAGE, message);
-        return new AssistantResponse(new Message("assistant", text.toString()), toolCall);
+        return new AssistantResponse(new Message("assistant", text.toString()), List.copyOf(toolCalls));
     }
 
-    public record AssistantResponse(Message message, ToolCall toolCall) {
+    public record AssistantResponse(Message message, List<ToolCall> toolCalls) {
         public AssistantResponse {
             Objects.requireNonNull(message, "message");
+            Objects.requireNonNull(toolCalls, "toolCalls");
         }
     }
 }

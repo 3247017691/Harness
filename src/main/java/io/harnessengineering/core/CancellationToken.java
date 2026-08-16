@@ -1,9 +1,9 @@
-package io.harnessengineering.agent;
+package io.harnessengineering.core;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Cooperative cancellation signal owned by one Agent turn. */
+/** Cooperative cancellation signal shared across runtime components. */
 public final class CancellationToken {
     private final AtomicBoolean cancelled = new AtomicBoolean();
 
@@ -17,7 +17,7 @@ public final class CancellationToken {
 
     public void throwIfCancelled() {
         if (isCancelled()) {
-            throw new CancellationException("agent operation cancelled");
+            throw new CancellationException("operation cancelled");
         }
     }
 }

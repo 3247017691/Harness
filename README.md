@@ -62,5 +62,5 @@ The runtime now includes:
 - typed service registry, plugin lifecycle fibers, and synchronous event semantics;
 - declarative YAML plugin composition with isolated nested groups;
 - append-only Session event logs with in-memory and JSONL persistence;
-- provider-neutral LLM streaming, serial Tool execution, and an Agent turn loop;
+- provider-neutral LLM streaming, parallel Tool execution with retry, and an Agent turn loop;
 - a CLI and a read-only HTTP/SSE server over persisted session logs.

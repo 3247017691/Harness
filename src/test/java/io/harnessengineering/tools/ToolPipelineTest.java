@@ -74,6 +74,140 @@ class ToolPipelineTest {
         assertEquals(0, registry.definitions().size());
     }
 
+    @Test
+    void parallelExecutionRunsAllCallsAndRecordsEventsInRequestOrder() throws Exception {
+        ToolRegistry registry = new ToolRegistry();
+        java.util.concurrent.CountDownLatch started = new java.util.concurrent.CountDownLatch(2);
+        java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        AtomicInteger executed = new AtomicInteger();
+        registry.register(tool("alpha", call -> {
+            started.countDown();
+            release.await();
+            executed.incrementAndGet();
+            return ToolResult.success(call.id(), "alpha");
+        }));
+        registry.register(tool("beta", call -> {
+            started.countDown();
+            release.await();
+            executed.incrementAndGet();
+            return ToolResult.success(call.id(), "beta");
+        }));
+        EventLogSession session = new EventLogSession(new SessionId("parallel"), new InMemorySessionStore());
+
+        java.util.List<ToolResult> results = new java.util.ArrayList<>();
+        Thread caller = Thread.ofVirtual().start(() -> results.addAll(new ToolPipeline(registry)
+                .executeParallel(List.of(new ToolCall("1", "alpha", "{}"), new ToolCall("2", "beta", "{}")),
+                        session)));
+
+        assertTrue(started.await(2, java.util.concurrent.TimeUnit.SECONDS));
+        release.countDown();
+        caller.join(java.time.Duration.ofSeconds(2));
+
+        assertEquals(2, executed.get());
+        assertEquals(List.of("alpha", "beta"), results.stream().map(ToolResult::content).toList());
+        assertEquals(List.of("tool/call", "tool/call", "tool/result", "tool/result"),
+                session.events().stream().map(event -> event.type()).toList());
+    }
+
+    @Test
+    void cancelledTokenPreventsDispatchEntirely() throws Exception {
+        ToolRegistry registry = new ToolRegistry();
+        AtomicInteger executed = new AtomicInteger();
+        registry.register(tool("alpha", call -> {
+            executed.incrementAndGet();
+            return ToolResult.success(call.id(), "alpha");
+        }));
+        registry.register(tool("beta", call -> {
+            executed.incrementAndGet();
+            return ToolResult.success(call.id(), "beta");
+        }));
+        EventLogSession session = new EventLogSession(new SessionId("cancel-pre"), new InMemorySessionStore());
+        io.harnessengineering.core.CancellationToken token = new io.harnessengineering.core.CancellationToken();
+        token.cancel();
+
+        List<ToolResult> results = new ToolPipeline(registry).executeParallel(List.of(
+                new ToolCall("1", "alpha", "{}"), new ToolCall("2", "beta", "{}")), session, token);
+
+        assertEquals(0, executed.get());
+        assertEquals(List.of("cancelled", "cancelled"), results.stream().map(ToolResult::errorCode).toList());
+        assertEquals(List.of("tool/call", "tool/call", "tool/result", "tool/result"),
+                session.events().stream().map(event -> event.type()).toList());
+    }
+
+    @Test
+    void cancellationConvergesInFlightCalls() throws Exception {
+        ToolRegistry registry = new ToolRegistry();
+        java.util.concurrent.CountDownLatch started = new java.util.concurrent.CountDownLatch(2);
+        java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        AtomicInteger executed = new AtomicInteger();
+        registry.register(tool("alpha", call -> {
+            started.countDown();
+            release.await();
+            executed.incrementAndGet();
+            return ToolResult.success(call.id(), "alpha");
+        }));
+        registry.register(tool("beta", call -> {
+            started.countDown();
+            release.await();
+            executed.incrementAndGet();
+            return ToolResult.success(call.id(), "beta");
+        }));
+        EventLogSession session = new EventLogSession(new SessionId("cancel-converge"), new InMemorySessionStore());
+        io.harnessengineering.core.CancellationToken token = new io.harnessengineering.core.CancellationToken();
+
+        java.util.List<ToolResult> results = new java.util.ArrayList<>();
+        Thread caller = Thread.ofVirtual().start(() -> results.addAll(new ToolPipeline(registry)
+                .executeParallel(List.of(new ToolCall("1", "alpha", "{}"), new ToolCall("2", "beta", "{}")),
+                        session, token)));
+
+        assertTrue(started.await(2, java.util.concurrent.TimeUnit.SECONDS));
+        token.cancel();
+        release.countDown();
+        caller.join(java.time.Duration.ofSeconds(2));
+
+        assertEquals(2, executed.get());
+        assertEquals(List.of("alpha", "beta"), results.stream().map(ToolResult::content).toList());
+        assertEquals(4, session.events().size());
+    }
+
+    @Test
+    void retrySucceedsAfterTransientFailures() {
+        ToolRegistry registry = new ToolRegistry();
+        AtomicInteger attempts = new AtomicInteger();
+        registry.register(tool("flaky", call -> {
+            if (attempts.incrementAndGet() < 3) {
+                throw new IllegalStateException("transient");
+            }
+            return ToolResult.success(call.id(), "recovered");
+        }));
+        EventLogSession session = new EventLogSession(new SessionId("retry"), new InMemorySessionStore());
+        ToolPipeline pipeline = new ToolPipeline(registry).retry(RetryPolicy.of(3, java.time.Duration.ZERO));
+
+        ToolResult result = pipeline.execute(List.of(new ToolCall("1", "flaky", "{}")), session).getFirst();
+
+        assertEquals(true, result.success());
+        assertEquals("recovered", result.content());
+        assertEquals(3, attempts.get());
+    }
+
+    @Test
+    void retryExhaustsAttemptsAndReturnsFailure() {
+        ToolRegistry registry = new ToolRegistry();
+        AtomicInteger attempts = new AtomicInteger();
+        registry.register(tool("always-fails", call -> {
+            attempts.incrementAndGet();
+            throw new IllegalStateException("still broken");
+        }));
+        EventLogSession session = new EventLogSession(new SessionId("retry-exhausted"), new InMemorySessionStore());
+        ToolPipeline pipeline = new ToolPipeline(registry).retry(RetryPolicy.of(3, java.time.Duration.ZERO));
+
+        ToolResult result = pipeline.execute(List.of(new ToolCall("1", "always-fails", "{}")), session).getFirst();
+
+        assertEquals(false, result.success());
+        assertEquals("execution_failed", result.errorCode());
+        assertEquals(3, attempts.get());
+    }
+
     private static Tool tool(String name, Executor executor) {
         return new Tool() {
             @Override public ToolDefinition definition() {
