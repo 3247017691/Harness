@@ -11,6 +11,7 @@ import io.harnessengineering.session.SessionEvent;
 import io.harnessengineering.session.SessionId;
 import io.harnessengineering.session.SessionStore;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +27,7 @@ import java.util.concurrent.Executors;
  * layer never mutates loop internals directly.
  *
  * <ul>
+ *   <li>GET / - browser client page (EventSource + fetch, read-only)</li>
  *   <li>GET /sessions/{id} - committed events as JSON</li>
  *   <li>GET /sessions/{id}/messages - derived model messages as JSON</li>
  *   <li>GET /sessions/{id}/stream - SSE stream that replays then follows</li>
@@ -58,6 +60,7 @@ public final class HarnessHttpServer implements AutoCloseable {
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
         this.server.setExecutor(executor);
         this.server.createContext("/sessions", exchange -> handle(exchange));
+        this.server.createContext("/", this::handleStatic);
     }
 
     /** Starts accepting connections. */
@@ -158,6 +161,36 @@ public final class HarnessHttpServer implements AutoCloseable {
             }
         } finally {
             subscription.close();
+            exchange.close();
+        }
+    }
+
+    private void handleStatic(HttpExchange exchange) {
+        try {
+            if (!exchange.getRequestMethod().equals("GET")) {
+                respond(exchange, 405, "{\"error\":\"method not allowed\"}");
+                return;
+            }
+            String path = exchange.getRequestURI().getPath();
+            if (!path.equals("/") && !path.equals("/index.html")) {
+                respond(exchange, 404, "{\"error\":\"not found\"}");
+                return;
+            }
+            try (InputStream resource = getClass().getResourceAsStream("/web/index.html")) {
+                if (resource == null) {
+                    respond(exchange, 500, "{\"error\":\"page missing\"}");
+                    return;
+                }
+                byte[] bytes = resource.readAllBytes();
+                exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream output = exchange.getResponseBody()) {
+                    output.write(bytes);
+                }
+            }
+        } catch (IOException exception) {
+            respond(exchange, 500, "{\"error\":\"server error\"}");
+        } finally {
             exchange.close();
         }
     }

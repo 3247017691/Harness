@@ -27,15 +27,19 @@ try (HarnessHttpServer server = new HarnessHttpServer(new JsonlSessionStore(Path
 Endpoints:
 
 ```text
-GET /sessions/{id}             committed events as JSON
-GET /sessions/{id}/messages    derived model messages as JSON
-GET /sessions/{id}/stream      SSE stream (replays, then follows live events)
+GET /                            browser client page (EventSource + fetch, read-only)
+GET /sessions/{id}               committed events as JSON
+GET /sessions/{id}/messages      derived model messages as JSON
+GET /sessions/{id}/stream        SSE stream (replays, then follows live events)
 ```
 
 ```powershell
+curl http://127.0.0.1:8080/
 curl http://127.0.0.1:8080/sessions/demo
 curl -N http://127.0.0.1:8080/sessions/demo/stream
 ```
+
+Open `http://127.0.0.1:8080/` in a browser to watch a session live.
 
 The web layer only reads Session state; it never mutates Agent loop internals directly.
 

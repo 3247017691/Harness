@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HarnessEngineering Session Viewer</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 60rem; padding: 0 1rem; color: #1f2328; }
+  h1 { font-size: 1.4rem; }
+  .row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  input { flex: 1; padding: 0.4rem; }
+  button { padding: 0.4rem 0.9rem; cursor: pointer; }
+  section { margin-bottom: 1.5rem; }
+  h2 { font-size: 1rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; }
+  ul { list-style: none; padding: 0; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+  li { padding: 0.25rem 0; border-bottom: 1px dotted #eaeef2; white-space: pre-wrap; word-break: break-all; }
+  #status { color: #57606a; font-size: 0.85rem; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<h1>HarnessEngineering Session Viewer</h1>
+<div class="row">
+  <input id="sessionId" value="demo" aria-label="Session id" placeholder="session id">
+  <button id="connect">Connect SSE</button>
+  <button id="messages">Load messages</button>
+</div>
+<div id="status">Idle. Open a Session first (for example via the CLI) to see live events.</div>
+
+<section>
+  <h2>Live events</h2>
+  <ul id="events"></ul>
+</section>
+
+<section>
+  <h2>Derived messages</h2>
+  <ul id="messages"></ul>
+</section>
+
+<script>
+  "use strict";
+  const sessionIdInput = document.getElementById("sessionId");
+  const status = document.getElementById("status");
+  const eventsList = document.getElementById("events");
+  const messagesList = document.getElementById("messages");
+  let source = null;
+
+  function currentId() {
+    const value = sessionIdInput.value.trim();
+    return value === "" ? "demo" : encodeURIComponent(value);
+  }
+
+  document.getElementById("connect").addEventListener("click", () => {
+    if (source) {
+      source.close();
+      source = null;
+    }
+    eventsList.innerHTML = "";
+    status.textContent = "Connecting to session " + currentId() + " ...";
+    source = new EventSource("/sessions/" + currentId() + "/stream");
+    source.addEventListener("session-event", (event) => {
+      const item = document.createElement("li");
+      item.textContent = event.data;
+      eventsList.appendChild(item);
+      status.textContent = "Connected; receiving events.";
+    });
+    source.onerror = () => {
+      // The server sends heartbeat comments, so errors here mean reconnecting.
+      status.textContent = "Connection interrupted; browser will retry.";
+    };
+  });
+
+  document.getElementById("messages").addEventListener("click", async () => {
+    messagesList.innerHTML = "";
+    status.textContent = "Loading messages ...";
+    try {
+      const response = await fetch("/sessions/" + currentId() + "/messages");
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+      const messages = await response.json();
+      if (messages.length === 0) {
+        status.textContent = "No messages yet.";
+        return;
+      }
+      messages.forEach((message) => {
+        const item = document.createElement("li");
+        item.textContent = message.role + ": " + message.content;
+        messagesList.appendChild(item);
+      });
+      status.textContent = "Loaded " + messages.length + " message(s).";
+    } catch (error) {
+      status.textContent = "Failed to load messages: " + error.message;
+    }
+  });
+</script>
+</body>
+</html>

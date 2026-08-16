@@ -92,6 +92,18 @@ class HarnessHttpServerTest {
     }
 
     @Test
+    void servesBrowserClientPage() throws Exception {
+        server = startServer();
+
+        HttpResponse<String> page = client.send(HttpRequest.newBuilder(uri("/")).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, page.statusCode());
+        assertTrue(page.headers().firstValue("content-type").orElse("").startsWith("text/html"));
+        assertTrue(page.body().contains("EventSource"));
+        assertTrue(page.body().contains("Load messages"));
+    }
+
+    @Test
     void invalidIdsAndUnknownRoutesReturnErrors() throws Exception {
         server = startServer();
 
