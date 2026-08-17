@@ -99,6 +99,62 @@ class HarnessApplicationTest {
         }
     }
 
+    @Test
+    void listsCreatesAndSendsToSessions() throws Exception {
+        SpringApplication application = new SpringApplication(HarnessApplication.class);
+        application.setBannerMode(Banner.Mode.OFF);
+        try (ConfigurableApplicationContext context = application.run(arguments())) {
+            int port = ((WebServerApplicationContext) context).getWebServer().getPort();
+            HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
+            String base = "http://127.0.0.1:" + port;
+
+            HttpResponse<String> listed = client.send(HttpRequest.newBuilder(
+                            URI.create(base + "/sessions")).GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, listed.statusCode());
+            assertTrue(listed.body().contains("\"id\":\"demo\""));
+
+            HttpResponse<String> created = client.send(HttpRequest.newBuilder(
+                            URI.create(base + "/sessions")).POST(HttpRequest.BodyPublishers.noBody()).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(201, created.statusCode());
+            String createdId = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readTree(created.body()).path("id").asText();
+            assertTrue(createdId.length() > 8);
+
+            HttpResponse<String> sent = client.send(HttpRequest.newBuilder(
+                            URI.create(base + "/sessions/" + createdId + "/messages"))
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString("{\"content\":\"what time is it\"}"))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(202, sent.statusCode());
+
+            // The per-session agent runs the turn asynchronously; poll for the tool round-trip.
+            String eventsBody = "";
+            for (int attempt = 0; attempt < 20; attempt++) {
+                eventsBody = client.send(HttpRequest.newBuilder(
+                                URI.create(base + "/sessions/" + createdId)).GET().build(),
+                        HttpResponse.BodyHandlers.ofString()).body();
+                if (eventsBody.contains("\"turn/end\"")) {
+                    break;
+                }
+                Thread.sleep(100);
+            }
+            assertTrue(eventsBody.contains("\"tool/call\""), "missing tool/call; got: " + eventsBody);
+            assertTrue(eventsBody.contains("\"tool/result\""), "missing tool/result; got: " + eventsBody);
+            assertTrue(eventsBody.contains("\"harness_current_time\""), "missing time tool name; got: " + eventsBody);
+
+            HttpResponse<String> projection = client.send(HttpRequest.newBuilder(
+                            URI.create(base + "/sessions/" + createdId + "/projection")).GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, projection.statusCode());
+            assertTrue(projection.body().contains("contextWindow"));
+            assertTrue(projection.body().contains("systemTokens"));
+            assertTrue(projection.body().contains("outputTokens"));
+        }
+    }
+
     private String[] arguments() {
         return new String[] {
                 "--harness.session-dir=" + directory,
