@@ -141,9 +141,18 @@ turn/start
 ```text
 HarnessEngineering/                  # 父 POM（多模块）
 ├── pom.xml
-├── README.md
-├── PLAN.md
-├── GUIDE.md
+├── README.md / README.zh.md         # 双语 README（镜像 dsh 形态）
+├── AGENTS.md                        # 贡献者/Agent 指引（镜像 dsh 形态）
+├── PLAN.md / GUIDE.md
+├── docs/                            # 架构、术语表、开发、测试、cookbook（中英成对）
+│   ├── architecture.md / .zh.md
+│   ├── glossary.md / .zh.md
+│   ├── development.md / .zh.md
+│   ├── testing.md / .zh.md
+│   └── cookbook/
+│       ├── adding-a-tool.md / .zh.md
+│       ├── adding-an-llm-adapter.md / .zh.md
+│       └── adding-a-web-surface.md / .zh.md
 ├── harness-core/                    # 框架无关的核心运行时
 │   ├── pom.xml
 │   └── src/main/java/io/harnessengineering/
@@ -153,7 +162,8 @@ HarnessEngineering/                  # 父 POM（多模块）
 │       ├── tools/         # Tool 定义、并行执行管线、重试
 │       ├── agent/         # Agent、Inbox、Loop
 │       ├── config/        # YAML 配置与 Loader
-│       ├── http/          # 只读 HTTP/SSE 服务
+│       ├── projection/    # 上下文压力/构成/用量/台账投影
+│       ├── http/          # 只读 HTTP/SSE 服务（JDK HttpServer）
 │       └── cli/           # 命令行入口
 │   └── src/test/java/
 └── harness-spring-app/              # Spring Boot 组装层（适配层依赖核心）
@@ -211,11 +221,12 @@ Phase 1 完成的标准不是代码数量，而是以下行为同时成立：插
 - Phase 0 工程骨架：完成（Maven 多模块、JUnit 5、README）。
 - Phase 1 核心运行时：完成（Context、ServiceKey/Registry、Plugin/Fiber/PluginManager、Effect、EventBus）。
 - Phase 2 配置和组合：完成（YAML 模型、插件工厂、PluginId、校验、嵌套组与隔离作用域）。
-- Phase 3 Session 事件日志：完成（SessionId、envelope、序号、消息投影、内存与 JSONL 后端）。
-- Phase 4 LLM 与 Tool：完成（LlmProvider、流式 chunk、Tool 定义/注册/执行、结构化失败）。
+- Phase 3 Session 事件日志：完成（SessionId、envelope、序号、消息投影、内存与 JSONL 后端、list() 枚举）。
+- Phase 4 LLM 与 Tool：完成（LlmProvider、流式 chunk、Tool 定义/注册/执行、结构化失败、工具结果回灌模型输入）。
 - Phase 5 Agent Loop：完成（Inbox、Turn/Step、串行与并行工具循环、取消、关闭等待）。
-- Phase 6 命令行和 Web：完成（CLI、HTTP API、SSE、浏览器客户端）。
+- Phase 6 命令行和 Web：完成（CLI append/replay/list、HTTP API、SSE、浏览器客户端）。
 - 延后能力：完成（并行工具调用、取消收敛、工具重试 RetryPolicy）。
 - 框架适配层：完成（`harness-spring-app`，Spring Boot 组装，含 Tomcat/Spring MVC Web 层；方向为核心 ← 适配层）。
+- **形态对齐（deepseek-harness 形态）**：完成（AGENTS.md + docs/ 双语树；Session Workbench 深色工作台——会话侧栏/新建/切换、会话头 Context + Session log、流式对话与工具卡片、composer 上下文仪表、Context 弹窗与投影台账；`GET/POST /sessions`、`POST /sessions/{id}/messages`、`GET /sessions/{id}/projection`）。
 
 后续方向：LLM 请求超时/取消接入、SQLite 后端、可观测性。

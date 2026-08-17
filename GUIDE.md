@@ -286,7 +286,7 @@ mvn test
 mvn -q package
 ```
 
-多模块布局：`harness-core`（框架无关的核心运行时）和 `harness-spring-app`（Spring Boot 组装层）。根目录构建会依次验证两个模块。
+多模块布局：`harness-core`（框架无关的核心运行时）和 `harness-spring-app`（Spring Boot 组装层）。根目录构建会依次验证两个模块。文档与仓库形态镜像 DeepSeek Harness：根级 `AGENTS.md`、双语 `README.md`/`README.zh.md`、`docs/`（architecture/glossary/development/testing/cookbook，中英成对）。
 
 代码完成后检查：
 
@@ -339,6 +339,10 @@ $env:GITHUB_TOKEN = "<new-token>"
 
 - Phase 0 工程骨架、Phase 1 核心运行时、Phase 2 配置与插件组合、Phase 3 Session 事件日志（内存 + JSONL）、Phase 4 LLM 与 Tool、Phase 5 Agent Loop、Phase 6 CLI + HTTP/SSE + 浏览器客户端；
 - 延后能力：并行工具调用、取消收敛、工具重试；
-- 应用框架适配层：`harness-spring-app`（Spring Boot 装配，含配置属性、HttpServer/SessionStore Bean 和演示 Agent）。
+- 应用框架适配层：`harness-spring-app`（Spring Boot 装配，含配置属性、HttpServer/SessionStore Bean 和演示 Agent）；
+- **形态对齐（deepseek-harness 形态）**：
+  - 结构：根级 `AGENTS.md`、双语 `README.md`/`README.zh.md`、`docs/` 双语树（architecture/glossary/development/testing/cookbook×3）与 `projection` 包；
+  - 界面：Session Workbench 深色工作台（会话侧栏 + 新建/切换、会话头 Context/Session log、流式对话与工具卡片、composer 上下文圆环、Context 弹窗、SSE 实时、Session log 弹窗含 JSONL 导出）；
+  - 功能：会话枚举/创建/发送（`GET/POST /sessions`、`POST /sessions/{id}/messages`）、投影端点 `GET /sessions/{id}/projection`、每会话按需 `AgentHost`（演示 Provider + `harness_current_time` 工具、工具结果回灌下一轮模型输入）、CLI `list` 子命令。
 
-后续可选方向：并发与取消的边界测试补强、LLM 请求超时/取消接入、SQLite 后端、可观测性（指标/日志）。新工作区先读取本文件和 `PLAN.md` 了解现状，再继续下一步。
+后续可选方向：并发与取消的边界测试补强、LLM 请求超时/取消接入、SQLite 后端、可观测性（指标/日志）。新工作区先读取本文件、`PLAN.md` 与 `AGENTS.md` 了解现状，再继续下一步。
