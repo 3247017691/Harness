@@ -100,7 +100,7 @@ class HarnessHttpServerTest {
         assertEquals(200, page.statusCode());
         assertTrue(page.headers().firstValue("content-type").orElse("").startsWith("text/html"));
         assertTrue(page.body().contains("EventSource"));
-        assertTrue(page.body().contains("Load messages"));
+        assertTrue(page.body().contains("Session Workbench"));
     }
 
     @Test

@@ -1,97 +1,709 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HarnessEngineering Session Viewer</title>
+<title>HarnessEngineering · Session Workbench</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 60rem; padding: 0 1rem; color: #1f2328; }
-  h1 { font-size: 1.4rem; }
-  .row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-  input { flex: 1; padding: 0.4rem; }
-  button { padding: 0.4rem 0.9rem; cursor: pointer; }
-  section { margin-bottom: 1.5rem; }
-  h2 { font-size: 1rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; }
-  ul { list-style: none; padding: 0; font-family: ui-monospace, monospace; font-size: 0.85rem; }
-  li { padding: 0.25rem 0; border-bottom: 1px dotted #eaeef2; white-space: pre-wrap; word-break: break-all; }
-  #status { color: #57606a; font-size: 0.85rem; min-height: 1.2em; }
+  :root {
+    color-scheme: dark;
+    --bg: #0d0f14;
+    --bg-raised: #14171e;
+    --bg-hover: #1b1f28;
+    --border: #262b36;
+    --border-strong: #343b49;
+    --text: #e5e9f0;
+    --text-secondary: #9aa4b2;
+    --text-tertiary: #6b7484;
+    --accent: #4f8cff;
+    --accent-soft: rgba(79, 140, 255, 0.14);
+    --danger: #f2777a;
+    --success: #5fb878;
+    --tint-system: #7ea0ff;
+    --tint-tools: #a78bfa;
+    --tint-messages: #4f8cff;
+    --mono: "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  #app { display: flex; height: 100vh; }
+
+  /* ── Sidebar ─────────────────────────────────────────────── */
+  #sidebar {
+    width: 264px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-raised);
+    border-right: 1px solid var(--border);
+  }
+  #sidebar header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  #brand { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
+  #brand small { display: block; color: var(--text-tertiary); font-weight: 400; font-size: 11px; }
+  #newSession {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  #newSession:hover { background: var(--bg-hover); border-color: var(--accent); }
+  #sessionList { flex: 1; overflow-y: auto; padding: 4px 8px; }
+  .session-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .session-item .sid { font-family: var(--mono); font-size: 12px; }
+  .session-item .meta { color: var(--text-tertiary); font-size: 11px; margin-top: 2px; }
+  .session-item:hover { background: var(--bg-hover); color: var(--text); }
+  .session-item.active { background: var(--accent-soft); color: var(--text); }
+  .session-item.active .sid { color: var(--accent); }
+  #sidebar footer { padding: 10px 16px; border-top: 1px solid var(--border); color: var(--text-tertiary); font-size: 11px; }
+
+  /* ── Main column ─────────────────────────────────────────── */
+  #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-raised);
+  }
+  #sessionTitle {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 14px;
+    min-width: 0;
+  }
+  #sessionTitle strong { font-family: var(--mono); font-weight: 600; }
+  #sessionTitle .status { color: var(--text-tertiary); font-size: 12px; }
+  .header-actions { margin-left: auto; display: flex; gap: 8px; }
+  .capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .capsule:hover { background: var(--bg-hover); color: var(--text); border-color: var(--border-strong); }
+  .capsule .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-tertiary); }
+  .capsule .dot.live { background: var(--success); }
+
+  #conversation { flex: 1; overflow-y: auto; padding: 24px 28px 12px; }
+  .turn-group { max-width: 860px; margin: 0 auto 18px; }
+  .turn-marker { display: flex; align-items: center; gap: 10px; color: var(--text-tertiary); font-size: 11px; margin-bottom: 12px; }
+  .turn-marker::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .msg { margin: 0 0 14px; max-width: 78%; }
+  .msg.user { margin-left: auto; }
+  .bubble {
+    border-radius: 12px;
+    padding: 10px 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px solid var(--border);
+  }
+  .msg.user .bubble { background: var(--accent-soft); border-color: rgba(79,140,255,0.35); }
+  .msg.assistant .bubble { background: var(--bg-raised); }
+  .bubble .caret {
+    display: inline-block;
+    width: 7px; height: 15px;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    background: var(--text);
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .msg .role { font-size: 11px; color: var(--text-tertiary); margin: 4px 2px; }
+
+  .tool-card {
+    margin: 0 0 14px;
+    max-width: 78%;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--tint-tools);
+    border-radius: 10px;
+    background: var(--bg-raised);
+    overflow: hidden;
+  }
+  .tool-card header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 12px;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+  .tool-card .tool-args { padding: 8px 12px; font-family: var(--mono); font-size: 12px; color: var(--text-tertiary); word-break: break-all; }
+  .tool-card .tool-result { padding: 8px 12px; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed var(--border); word-break: break-word; }
+  .tool-card .tool-result.ok { color: var(--success); }
+  .tool-card .tool-result.err { color: var(--danger); }
+
+  .system-note { text-align: center; color: var(--text-tertiary); font-size: 12px; margin: 16px 0; }
+  .system-note.error { color: var(--danger); }
+
+  /* ── Composer ────────────────────────────────────────────── */
+  #composer-wrap { border-top: 1px solid var(--border); background: var(--bg-raised); padding: 12px 20px 16px; }
+  #composer { max-width: 860px; margin: 0 auto; display: flex; gap: 10px; align-items: flex-end; }
+  #meter {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    cursor: pointer;
+    position: relative;
+  }
+  #meter:hover { color: var(--text); }
+  #meter .label { max-width: 96px; }
+  #meterInput {
+    width: 100%;
+    resize: none;
+    min-height: 44px;
+    max-height: 160px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font: inherit;
+    outline: none;
+  }
+  #meterInput:focus { border-color: var(--accent); }
+  #sendBtn {
+    flex: none;
+    height: 44px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #sendBtn:disabled { opacity: 0.45; cursor: default; }
+
+  /* ── Modal ───────────────────────────────────────────────── */
+  #modal-root { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 40; }
+  #modal-root.open { display: flex; }
+  #modal-backdrop { position: absolute; inset: 0; background: rgba(4, 6, 10, 0.66); }
+  #modal-card {
+    position: relative;
+    width: min(680px, calc(100vw - 48px));
+    max-height: min(680px, calc(100vh - 96px));
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #modal-title { padding: 16px 20px 0; font-size: 15px; font-weight: 600; }
+  #modal-desc { padding: 4px 20px 0; color: var(--text-tertiary); font-size: 12px; }
+  #modal-close { position: absolute; top: 12px; right: 12px; border: 0; background: transparent; color: var(--text-tertiary); font-size: 18px; cursor: pointer; }
+  #modal-close:hover { color: var(--text); }
+  #modal-body { overflow-y: auto; padding: 16px 20px 20px; }
+  #modal-body section { margin-top: 20px; }
+  #modal-body section:first-child { margin-top: 0; }
+  #modal-body h3 { margin: 0 0 10px; font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+
+  .occupancy-header { display: flex; align-items: baseline; gap: 8px; }
+  .percent { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .figures { margin-left: auto; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .bar { display: flex; gap: 1px; height: 6px; border-radius: 999px; background: var(--bg-hover); overflow: hidden; margin: 10px 0 14px; }
+  .segment { height: 100%; }
+  .rows { margin: 0; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 3px 0; }
+  .row dt { color: var(--text-secondary); }
+  .row dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .row.sub dt { color: var(--text-tertiary); font-size: 12px; padding-left: 14px; }
+  .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
+  .empty { color: var(--text-tertiary); font-size: 13px; margin: 0; }
+
+  table.ledger { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.ledger th, table.ledger td { padding: 4px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  table.ledger th { color: var(--text-tertiary); font-weight: 500; }
+  table.ledger td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+  table.ledger .time { color: var(--text-tertiary); white-space: nowrap; font-family: var(--mono); }
+
+  #logEvents { list-style: none; margin: 0; padding: 0; font-family: var(--mono); font-size: 11px; }
+  #logEvents li { padding: 3px 0; border-bottom: 1px dashed var(--border); color: var(--text-secondary); word-break: break-all; }
+  #logEvents .seq { color: var(--text-tertiary); }
+  #logEvents .type { color: var(--accent); }
+  .toolbar { display: flex; gap: 8px; margin-top: 12px; }
+  .toolbar button { border: 1px solid var(--border-strong); background: transparent; color: var(--text-secondary); border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .toolbar button:hover { color: var(--text); background: var(--bg-hover); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
 </style>
 </head>
 <body>
-<h1>HarnessEngineering Session Viewer</h1>
-<div class="row">
-  <input id="sessionId" value="demo" aria-label="Session id" placeholder="session id">
-  <button id="connect">Connect SSE</button>
-  <button id="messages">Load messages</button>
+<div id="app">
+  <aside id="sidebar">
+    <header>
+      <div id="brand">HarnessEngineering<small>Session Workbench</small></div>
+      <button id="newSession" title="新建会话">＋ 新会话</button>
+    </header>
+    <nav id="sessionList"></nav>
+    <footer>核心：事件日志 · Agent 循环 · 工具管线</footer>
+  </aside>
+
+  <main id="main">
+    <div id="header">
+      <div id="sessionTitle">
+        <strong id="sessionIdLabel">demo</strong>
+        <span class="status" id="sessionStatus">未连接</span>
+      </div>
+      <div class="header-actions">
+        <button class="capsule" id="contextBtn"><span class="dot" id="meterDot"></span>Context</button>
+        <button class="capsule" id="logBtn">Session log</button>
+      </div>
+    </div>
+
+    <div id="conversation"></div>
+
+    <div id="composer-wrap">
+      <div id="composer">
+        <div id="meter" title="上下文占用（参考值）">
+          <svg id="meterSvg" width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="var(--bg-hover)" stroke-width="5"/>
+            <circle id="meterArc" cx="20" cy="20" r="16" fill="none" stroke="var(--accent)"
+                    stroke-width="5" stroke-linecap="round"
+                    stroke-dasharray="100.53" stroke-dashoffset="100.53" transform="rotate(-90 20 20)"/>
+          </svg>
+          <span class="label" id="meterLabel">上下文 0%</span>
+        </div>
+        <textarea id="meterInput" placeholder="输入消息，回车发送（Shift+Enter 换行）" rows="1"></textarea>
+        <button id="sendBtn" disabled>发送</button>
+      </div>
+    </div>
+  </main>
 </div>
-<div id="status">Idle. Open a Session first (for example via the CLI) to see live events.</div>
 
-<section>
-  <h2>Live events</h2>
-  <ul id="events"></ul>
-</section>
-
-<section>
-  <h2>Derived messages</h2>
-  <ul id="messages"></ul>
-</section>
+<div id="modal-root" aria-hidden="true">
+  <div id="modal-backdrop"></div>
+  <div id="modal-card">
+    <button id="modal-close" aria-label="关闭">×</button>
+    <div id="modal-title">Context</div>
+    <div id="modal-desc">上下文窗口：占用、构成与逐请求输入输出用量</div>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
 <script>
-  "use strict";
-  const sessionIdInput = document.getElementById("sessionId");
-  const status = document.getElementById("status");
-  const eventsList = document.getElementById("events");
-  const messagesList = document.getElementById("messages");
-  let source = null;
+"use strict";
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const conversation = $("conversation");
+  const sessionListEl = $("sessionList");
+  const sessionIdLabel = $("sessionIdLabel");
+  const sessionStatus = $("sessionStatus");
+  const meterInput = $("meterInput");
+  const sendBtn = $("sendBtn");
+  const modalRoot = $("modal-root");
+  const modalBody = $("modal-body");
+  const logBtn = $("logBtn");
+  const contextBtn = $("contextBtn");
 
-  function currentId() {
-    const value = sessionIdInput.value.trim();
-    return value === "" ? "demo" : encodeURIComponent(value);
+  let currentId = "demo";
+  let source = null;
+  let streaming = false;
+  let sink = null;            // current assistant bubble element
+  let pendingTool = null;     // tool card awaiting its result
+  let lastSeq = 0;
+
+  const esc = (text) => text.replace(/[&<>"']/g, (ch) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+  // ── Session list ──────────────────────────────────────────
+  async function refreshSessions() {
+    try {
+      const response = await fetch("/sessions");
+      if (!response.ok) return;
+      const sessions = await response.json();
+      sessionListEl.innerHTML = "";
+      for (const item of sessions) {
+        const button = document.createElement("button");
+        button.className = "session-item" + (item.id === currentId ? " active" : "");
+        const time = item.lastEventAt
+            ? new Date(item.lastEventAt).toLocaleTimeString() : "无事件";
+        button.innerHTML = `<span class="sid">${esc(item.id)}</span>
+          <div class="meta">${item.events} 事件 · ${time}</div>`;
+        button.addEventListener("click", () => selectSession(item.id));
+        sessionListEl.appendChild(button);
+      }
+    } catch (error) { /* sidebar refresh is best-effort */ }
   }
 
-  document.getElementById("connect").addEventListener("click", () => {
-    if (source) {
-      source.close();
-      source = null;
-    }
-    eventsList.innerHTML = "";
-    status.textContent = "Connecting to session " + currentId() + " ...";
-    source = new EventSource("/sessions/" + currentId() + "/stream");
-    source.addEventListener("session-event", (event) => {
-      const item = document.createElement("li");
-      item.textContent = event.data;
-      eventsList.appendChild(item);
-      status.textContent = "Connected; receiving events.";
-    });
-    source.onerror = () => {
-      // The server sends heartbeat comments, so errors here mean reconnecting.
-      status.textContent = "Connection interrupted; browser will retry.";
-    };
-  });
-
-  document.getElementById("messages").addEventListener("click", async () => {
-    messagesList.innerHTML = "";
-    status.textContent = "Loading messages ...";
+  async function newSession() {
     try {
-      const response = await fetch("/sessions/" + currentId() + "/messages");
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status);
-      }
+      const response = await fetch("/sessions", { method: "POST" });
+      if (!response.ok) return alert("创建会话失败：HTTP " + response.status);
+      const body = await response.json();
+      await selectSession(body.id);
+      meterInput.focus();
+    } catch (error) { alert("创建会话失败：" + error.message); }
+  }
+
+  // ── Session selection / SSE ───────────────────────────────
+  async function selectSession(id) {
+    if (source) { source.close(); source = null; }
+    currentId = id;
+    sessionIdLabel.textContent = id;
+    conversation.innerHTML = "";
+    lastSeq = 0;
+    streaming = false; sink = null; pendingTool = null;
+    sessionStatus.textContent = "连接中…";
+    refreshSessions();
+    loadMessages(id);
+    loadProjection(id);
+    connect(id);
+  }
+
+  function connect(id) {
+    source = new EventSource(`/sessions/${encodeURIComponent(id)}/stream`);
+    source.addEventListener("session-event", (event) => {
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+      renderEvent(data);
+      sessionStatus.textContent = "实时";
+    });
+    source.onopen = () => { sessionStatus.textContent = "实时"; };
+    source.onerror = () => { sessionStatus.textContent = "重连中…"; };
+  }
+
+  async function loadMessages(id) {
+    try {
+      const response = await fetch(`/sessions/${encodeURIComponent(id)}/messages`);
+      if (!response.ok) return;
       const messages = await response.json();
       if (messages.length === 0) {
-        status.textContent = "No messages yet.";
-        return;
+        conversation.insertAdjacentHTML("beforeend",
+            `<div class="system-note">会话为空。发送一条消息开始对话。</div>`);
       }
-      messages.forEach((message) => {
-        const item = document.createElement("li");
-        item.textContent = message.role + ": " + message.content;
-        messagesList.appendChild(item);
+    } catch (error) { /* SSE replay fills history anyway */ }
+  }
+
+  async function loadProjection(id) {
+    try {
+      const response = await fetch(`/sessions/${encodeURIComponent(id)}/projection`);
+      if (!response.ok) return;
+      const projection = await response.json();
+      renderMeter(projection.pressure);
+    } catch (error) { /* meter stays at zero */ }
+  }
+
+  // ── Event rendering ───────────────────────────────────────
+  function renderEvent(event) {
+    lastSeq = event.sequence;
+    switch (event.type) {
+      case "turn/start":
+        conversation.insertAdjacentHTML("beforeend",
+            `<div class="turn-group" data-turn="${event.data.turn}">
+               <div class="turn-marker">第 ${event.data.turn} 轮</div>
+             </div>`);
+        break;
+      case "user/message":
+        appendBubble("user", event.data.content);
+        break;
+      case "step/start":
+        streaming = true;
+        sink = appendPlaceholder();
+        break;
+      case "assistant/chunk":
+        if (!streaming || !sink) { streaming = true; sink = appendPlaceholder(); }
+        appendText(event.data.text || "");
+        break;
+      case "assistant/message":
+        if (sink) { sink.querySelector(".caret")?.remove(); streaming = false; sink = null; }
+        loadProjection(currentId);
+        break;
+      case "tool/call":
+        sink = null; streaming = false;
+        pendingTool = appendToolCard(event.data.name, event.data.arguments, event.data.id);
+        break;
+      case "tool/result":
+        if (pendingTool) {
+          finishToolCard(pendingTool, event.data.success, event.data.content);
+          pendingTool = null;
+        }
+        break;
+      case "step/end":
+        if (sink) { sink.querySelector(".caret")?.remove(); }
+        streaming = false; sink = null;
+        break;
+      case "turn/end":
+        conversation.insertAdjacentHTML("beforeend",
+            `<div class="system-note">${event.data.status === "cancelled" ? "已取消" : "完成"}</div>`);
+        refreshSessions();
+        loadProjection(currentId);
+        break;
+      default:
+        break;
+    }
+    conversation.scrollTop = conversation.scrollHeight;
+  }
+
+  function lastTurnGroup() {
+    const groups = conversation.querySelectorAll(".turn-group");
+    return groups[groups.length - 1] || conversation;
+  }
+
+  function appendBubble(role, content) {
+    const target = lastTurnGroup();
+    target.insertAdjacentHTML("beforeend",
+        `<div class="msg ${role}"><div class="bubble">${esc(content)}</div></div>`);
+  }
+
+  function appendPlaceholder() {
+    const target = lastTurnGroup();
+    const wrap = document.createElement("div");
+    wrap.className = "msg assistant";
+    wrap.innerHTML = `<div class="bubble"><span class="caret"></span></div>`;
+    target.appendChild(wrap);
+    return wrap.querySelector(".bubble");
+  }
+
+  function appendText(text) {
+    if (!sink || !text) return;
+    const caret = sink.querySelector(".caret");
+    if (caret) caret.remove();
+    sink.insertAdjacentText("beforeend", text);
+    sink.insertAdjacentHTML("beforeend", `<span class="caret"></span>`);
+  }
+
+  function appendToolCard(name, arguments_, id) {
+    const target = lastTurnGroup();
+    const wrap = document.createElement("div");
+    wrap.className = "tool-card";
+    wrap.innerHTML = `<header>⚙ ${esc(name)} <span style="margin-left:auto">#${esc(id)}</span></header>
+      <div class="tool-args">${esc(arguments_ || "{}")}</div>
+      <div class="tool-result">执行中…</div>`;
+    target.appendChild(wrap);
+    return wrap;
+  }
+
+  function finishToolCard(card, success, content) {
+    const result = card.querySelector(".tool-result");
+    result.className = "tool-result " + (success ? "ok" : "err");
+    result.textContent = success ? "✓ " + content : "✗ " + content;
+  }
+
+  // ── Composer ──────────────────────────────────────────────
+  function resizeInput() { meterInput.style.height = "auto"; meterInput.style.height = Math.min(meterInput.scrollHeight, 160) + "px"; }
+  meterInput.addEventListener("input", () => { resizeInput(); sendBtn.disabled = meterInput.value.trim() === ""; });
+  meterInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(); }
+  });
+
+  async function send() {
+    const content = meterInput.value.trim();
+    if (!content || !currentId) return;
+    meterInput.value = ""; resizeInput(); sendBtn.disabled = true;
+    conversation.insertAdjacentHTML("beforeend",
+        `<div class="msg user"><div class="bubble">${esc(content)}</div></div>`);
+    conversation.scrollTop = conversation.scrollHeight;
+    try {
+      const response = await fetch(`/sessions/${encodeURIComponent(currentId)}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
       });
-      status.textContent = "Loaded " + messages.length + " message(s).";
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        conversation.insertAdjacentHTML("beforeend",
+            `<div class="system-note error">发送失败：${body.error || ("HTTP " + response.status)}</div>`);
+      }
     } catch (error) {
-      status.textContent = "Failed to load messages: " + error.message;
+      conversation.insertAdjacentHTML("beforeend", `<div class="system-note error">发送失败：${esc(error.message)}</div>`);
+    }
+  }
+
+  // ── Context meter ─────────────────────────────────────────
+  const arcLength = 2 * Math.PI * 16; // r=16
+  function renderMeter(pressure) {
+    if (!pressure) {
+      $("meterArc").style.strokeDashoffset = String(arcLength);
+      $("meterLabel").textContent = "上下文 0%";
+      $("meterDot").className = "dot";
+      return;
+    }
+    const percent = Math.max(0, Math.min(100, pressure.percent || 0));
+    const offset = arcLength * (1 - percent / 100);
+    $("meterArc").style.strokeDashoffset = String(offset);
+    $("meterArc").style.stroke = percent > 90 ? "var(--danger)" : percent > 70 ? "#e5b567" : "var(--accent)";
+    const used = fmtTokens(pressure.projectedTokens ?? 0);
+    const capacity = fmtTokens(pressure.contextWindow ?? 0);
+    $("meterLabel").textContent = `上下文 ${percent}%（${used} / ${capacity}）`;
+    $("meterDot").className = "dot" + (percent > 90 ? " live" : "");
+  }
+
+  function fmtTokens(n) {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return String(n);
+  }
+
+  // ── Modals ────────────────────────────────────────────────
+  function openModal(title, desc, html) {
+    $("modal-title").textContent = title;
+    $("modal-desc").textContent = desc;
+    modalBody.innerHTML = html;
+    modalRoot.classList.add("open");
+    modalRoot.setAttribute("aria-hidden", "false");
+  }
+  function closeModal() {
+    modalRoot.classList.remove("open");
+    modalRoot.setAttribute("aria-hidden", "true");
+  }
+  $("modal-close").addEventListener("click", closeModal);
+  $("modal-backdrop").addEventListener("click", closeModal);
+
+  logBtn.addEventListener("click", async () => {
+    try {
+      const response = await fetch(`/sessions/${encodeURIComponent(currentId)}`);
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const events = await response.json();
+      const lis = events.map((event) =>
+          `<li><span class="seq">#${event.sequence}</span> <span class="type">${esc(event.type)}</span> ${esc(JSON.stringify(event.data))}</li>`)
+          .join("");
+      openModal("Session log", `${currentId} · ${events.length} 个事件`,
+          `<ul id="logEvents">${lis || '<li class="empty">暂无事件</li>'}</ul>
+           <div class="toolbar">
+             <button id="exportLog">导出 JSONL</button>
+           </div>`);
+      $("exportLog").addEventListener("click", () => {
+        const blob = new Blob([events.map((event) => JSON.stringify(event)).join("\n")],
+            { type: "application/x-ndjson" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = currentId + ".jsonl"; a.click();
+        URL.revokeObjectURL(url);
+      });
+    } catch (error) {
+      openModal("Session log", currentId, `<p class="empty">加载失败：${esc(error.message)}</p>`);
     }
   });
+
+  contextBtn.addEventListener("click", async () => {
+    try {
+      const response = await fetch(`/sessions/${encodeURIComponent(currentId)}/projection`);
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const p = await response.json();
+      renderContextModal(p);
+    } catch (error) {
+      openModal("Context", currentId, `<p class="empty">加载失败：${esc(error.message)}</p>`);
+    }
+  });
+
+  // ── Context modal rendering ───────────────────────────────
+  function renderContextModal(p) {
+    const pressure = p.pressure || {};
+    const breakdown = p.breakdown || { systemTokens: 0, toolsTokens: 0, messageTokens: 0 };
+    const usage = p.usage || { uncachedInputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 0 };
+    const requests = p.requests || [];
+
+    const percent = pressure.percent ?? 0;
+    const total = breakdown.systemTokens + breakdown.toolsTokens + breakdown.messageTokens;
+    const seg = (tokens, color) => total > 0 && tokens > 0
+        ? `<div class="segment" style="width:${(tokens / total * 100).toFixed(1)}%;background:${color}"></div>` : "";
+    const bar = `<div class="bar">${seg(breakdown.systemTokens, "var(--tint-system)")}${seg(breakdown.toolsTokens, "var(--tint-tools)")}${seg(breakdown.messageTokens, "var(--tint-messages)")}</div>`;
+
+    const input = usage.uncachedInputTokens + usage.cacheReadTokens + usage.cacheWriteTokens;
+    const hit = input > 0 ? Math.round(usage.cacheReadTokens / input * 100) : null;
+    const rows = [
+      ["输入", input],
+      [" 未缓存", usage.uncachedInputTokens],
+      [" 缓存读取", usage.cacheReadTokens],
+      [" 缓存写入", usage.cacheWriteTokens],
+      ["输出", usage.outputTokens],
+      ...(hit === null ? [] : [["缓存命中", hit + "%"]]),
+    ].map(([label, value]) =>
+        `<div class="row${label.startsWith(" ") ? " sub" : ""}">
+           <dt>${label.trim()}</dt><dd>${fmtTokens(value)}${typeof value === "string" ? "" : ""}</dd></div>`)
+        .join("");
+
+    const ledgerRows = requests.length === 0
+        ? `<tr><td colspan="6" class="empty" style="text-align:center">暂无模型请求</td></tr>`
+        : requests.map((r) =>
+            `<tr><td>${r.turn}.${r.step}</td>
+              <td>${esc(r.providerId || "—")}/${esc(r.model || "—")}</td>
+              <td class="num">${fmtTokens(r.input)}</td>
+              <td class="num">${fmtTokens(r.output)}</td>
+              <td class="num">${r.reasoning ? fmtTokens(r.reasoning) : "—"}</td>
+              <td class="time">${new Date(r.time).toLocaleTimeString()}</td></tr>`)
+        .join("");
+
+    openModal("Context", `${currentId} · 上下文窗口（参考值，非精确计量）`,
+        `<section>
+          <h3>上下文占用</h3>
+          <div class="occupancy-header">
+            <span class="percent">${percent}%</span>
+            <span class="figures">~${fmtTokens(pressure.projectedTokens ?? 0)} / ${fmtTokens(pressure.contextWindow ?? 0)}</span>
+          </div>
+          ${bar}
+          <dl class="rows">
+            <div class="row"><dt><span class="swatch" style="background:var(--tint-system)"></span>系统提示</dt><dd>~${fmtTokens(breakdown.systemTokens)}</dd></div>
+            <div class="row"><dt><span class="swatch" style="background:var(--tint-tools)"></span>工具</dt><dd>~${fmtTokens(breakdown.toolsTokens)}</dd></div>
+            <div class="row"><dt><span class="swatch" style="background:var(--tint-messages)"></span>消息</dt><dd>~${fmtTokens(breakdown.messageTokens)}</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h3>会话累计用量</h3>
+          ${usage.uncachedInputTokens + usage.outputTokens === 0
+            ? `<p class="empty">尚无模型用量上报</p>`
+            : `<dl class="rows">${rows}</dl>`}
+        </section>
+        <section>
+          <h3>请求明细</h3>
+          <table class="ledger">
+            <thead><tr><th>步骤</th><th>模型</th><th class="num">输入</th><th class="num">输出</th><th class="num">推理</th><th>时间</th></tr></thead>
+            <tbody>${ledgerRows}</tbody>
+          </table>
+        </section>`);
+  }
+
+  // ── Boot ──────────────────────────────────────────────────
+  $("newSession").addEventListener("click", newSession);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeModal();
+  });
+  refreshSessions();
+  selectSession(currentId);
+})();
 </script>
 </body>
 </html>
