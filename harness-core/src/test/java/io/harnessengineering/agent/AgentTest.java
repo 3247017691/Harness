@@ -102,6 +102,32 @@ class AgentTest {
         assertEquals(AgentState.CLOSED, agent.state());
     }
 
+    @Test
+    void toolResultIsFedBackAsModelVisibleToolMessage() throws Exception {
+        EventLogSession session = session("feedback");
+        java.util.concurrent.atomic.AtomicReference<LlmRequest> secondRequest = new java.util.concurrent.atomic.AtomicReference<>();
+        LlmProvider provider = provider(request -> {
+            if (request.messages().stream().anyMatch(message -> message.role().equals("tool"))) {
+                secondRequest.set(request);
+                return Stream.of(StreamChunk.text("done"));
+            }
+            return Stream.of(StreamChunk.toolCall("call-9", "echo", "{}"));
+        });
+        ToolRegistry registry = new ToolRegistry();
+        registry.register(echoTool());
+        Agent agent = new Agent(session, provider, "test", new ToolPipeline(registry));
+        agent.start();
+        CountDownLatch turnEnded = awaitEvent(session, SessionEventTypes.TURN_END);
+        agent.inbox().followup(new Message("user", "run"));
+
+        assertTrue(turnEnded.await(2, TimeUnit.SECONDS));
+        agent.close();
+
+        assertTrue(secondRequest.get().messages().stream()
+                .filter(message -> message.role().equals("tool"))
+                .map(Message::content).findFirst().orElseThrow().contains("ok"));
+    }
+
     private static EventLogSession session(String id) {
         return new EventLogSession(new SessionId(id), new InMemorySessionStore());
     }

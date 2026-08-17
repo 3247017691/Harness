@@ -29,6 +29,19 @@ class HarnessCliTest {
     }
 
     @Test
+    void listsPersistedSessionsInStoreOrder() {
+        invoke("append", storeDirectory.toString(), "beta", "user", "b");
+        invoke("append", storeDirectory.toString(), "alpha", "user", "a");
+
+        Invocation listed = invoke("list", storeDirectory.toString());
+
+        assertEquals(0, listed.exitCode());
+        assertEquals(java.util.List.of("alpha", "beta"),
+                java.util.Arrays.stream(listed.output().split("\r?\n"))
+                        .map(String::trim).filter(line -> !line.isEmpty()).toList());
+    }
+
+    @Test
     void invalidCommandsReturnUsageErrors() {
         Invocation unknown = invoke("unknown");
         Invocation malformed = invoke("append", "only", "three", "arguments");

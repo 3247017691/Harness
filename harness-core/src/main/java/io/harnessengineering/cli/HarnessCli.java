@@ -47,6 +47,7 @@ public final class HarnessCli {
             return switch (arguments[0]) {
                 case "append" -> append(arguments, output, error);
                 case "replay" -> replay(arguments, output, error);
+                case "list" -> list(arguments, output, error);
                 default -> {
                     error.println("Unknown command: " + arguments[0]);
                     usage(error);
@@ -97,6 +98,22 @@ public final class HarnessCli {
         }
     }
 
+    private static int list(String[] arguments, PrintStream output, PrintStream error) {
+        if (arguments.length != 2) {
+            error.println("list requires: <store-dir>");
+            return 2;
+        }
+        String storeDirectory = arguments[1];
+        if (storeDirectory.isBlank()) {
+            throw new IllegalArgumentException("store directory must not be blank");
+        }
+        List<SessionId> ids = new JsonlSessionStore(Path.of(storeDirectory)).list();
+        for (SessionId id : ids) {
+            output.println(id.value());
+        }
+        return 0;
+    }
+
     private static EventLogSession session(String storeDirectory, String sessionId) {
         if (storeDirectory.isBlank()) {
             throw new IllegalArgumentException("store directory must not be blank");
@@ -112,5 +129,6 @@ public final class HarnessCli {
         stream.println("Usage:");
         stream.println("  harness append <store-dir> <session-id> <user|assistant> <content>");
         stream.println("  harness replay <store-dir> <session-id>");
+        stream.println("  harness list <store-dir>");
     }
 }

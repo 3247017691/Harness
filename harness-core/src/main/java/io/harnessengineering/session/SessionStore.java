@@ -20,4 +20,11 @@ public interface SessionStore {
      * @return event snapshot
      */
     List<SessionEvent> load(SessionId sessionId);
+
+    /**
+     * Lists every session id currently known to this store.
+     *
+     * @return session ids, in store-defined order
+     */
+    List<SessionId> list();
 }

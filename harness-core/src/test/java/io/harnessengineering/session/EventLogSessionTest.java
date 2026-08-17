@@ -67,6 +67,7 @@ class EventLogSessionTest {
         SessionStore failingStore = new SessionStore() {
             @Override public void append(SessionId id, SessionEvent event) { throw new IllegalStateException("disk unavailable"); }
             @Override public List<SessionEvent> load(SessionId id) { return List.of(); }
+            @Override public List<SessionId> list() { return List.of(); }
         };
         EventLogSession session = new EventLogSession(new SessionId("session-5"), failingStore);
         List<SessionEvent> received = new ArrayList<>();

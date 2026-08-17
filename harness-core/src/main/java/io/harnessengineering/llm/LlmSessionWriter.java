@@ -48,7 +48,9 @@ public final class LlmSessionWriter {
         }
         ObjectNode message = JsonNodeFactory.instance.objectNode()
                 .put("role", "assistant")
-                .put("content", text.toString());
+                .put("content", text.toString())
+                .put("providerId", request.provider())
+                .put("model", request.model());
         session.append(SessionEventTypes.ASSISTANT_MESSAGE, message);
         return new AssistantResponse(new Message("assistant", text.toString()), List.copyOf(toolCalls));
     }

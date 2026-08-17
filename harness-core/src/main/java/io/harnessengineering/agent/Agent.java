@@ -131,9 +131,14 @@ public final class Agent implements AutoCloseable {
                     session.append(SessionEventTypes.STEP_END, marker("status", "completed"));
                     return;
                 }
-                tools.executeParallel(response.toolCalls(), session, token);
+                List<io.harnessengineering.tools.ToolResult> executed
+                        = tools.executeParallel(response.toolCalls(), session, token);
                 session.append(SessionEventTypes.STEP_END, marker("status", "tool-executed"));
-                input = new ArrayList<>(inbox.claimNextStep());
+                List<Message> nextInput = new ArrayList<>(inbox.claimNextStep());
+                for (io.harnessengineering.tools.ToolResult result : executed) {
+                    nextInput.add(new Message("tool", "{call " + result.toolCallId() + ": " + result.content() + "}"));
+                }
+                input = nextInput;
             }
         } catch (java.util.concurrent.CancellationException exception) {
             outcome = "cancelled";

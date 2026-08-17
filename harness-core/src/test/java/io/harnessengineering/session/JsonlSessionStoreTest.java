@@ -54,6 +54,27 @@ class JsonlSessionStoreTest {
     }
 
     @Test
+    void listsPersistedSessionsInNameOrder() {
+        JsonlSessionStore store = new JsonlSessionStore(directory);
+        new EventLogSession(new SessionId("zeta"), store).append(
+                SessionEventTypes.USER_MESSAGE, message("user", "z"));
+        new EventLogSession(new SessionId("alpha"), store).append(
+                SessionEventTypes.USER_MESSAGE, message("user", "a"));
+        new EventLogSession(new SessionId("session-with-dots.v2"), store).append(
+                SessionEventTypes.USER_MESSAGE, message("user", "dots"));
+
+        assertEquals(List.of(new SessionId("alpha"), new SessionId("session-with-dots.v2"),
+                        new SessionId("zeta")),
+                store.list());
+    }
+
+    @Test
+    void listsNothingForMissingDirectory() {
+        Path missing = directory.resolve("does-not-exist");
+        assertEquals(List.of(), new JsonlSessionStore(missing).list());
+    }
+
+    @Test
     void sessionDoesNotAdvanceWhenStoreAppendFails() {
         Path blockingFile = directory.resolve("not-a-directory");
         try {

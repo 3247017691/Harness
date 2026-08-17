@@ -28,6 +28,13 @@ public final class InMemorySessionStore implements SessionStore {
         return events.getOrDefault(sessionId, List.of()).stream().map(InMemorySessionStore::copy).toList();
     }
 
+    @Override
+    public synchronized List<SessionId> list() {
+        return events.keySet().stream()
+                .sorted(java.util.Comparator.comparing(SessionId::value))
+                .toList();
+    }
+
     private static SessionEvent copy(SessionEvent event) {
         return new SessionEvent(event.sequence(), event.time(), event.type(), event.data());
     }

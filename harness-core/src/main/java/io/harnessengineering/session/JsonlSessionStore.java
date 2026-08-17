@@ -81,6 +81,27 @@ public final class JsonlSessionStore implements SessionStore {
         }
     }
 
+    @Override
+    public List<SessionId> list() {
+        synchronized (lock) {
+            if (!Files.isDirectory(directory)) {
+                return List.of();
+            }
+            try (var files = Files.list(directory)) {
+                return files.filter(Files::isRegularFile)
+                        .filter(path -> path.getFileName().toString().endsWith(".jsonl"))
+                        .map(path -> {
+                            String name = path.getFileName().toString();
+                            return new SessionId(name.substring(0, name.length() - ".jsonl".length()));
+                        })
+                        .sorted(java.util.Comparator.comparing(SessionId::value))
+                        .toList();
+            } catch (IOException exception) {
+                throw new SessionPersistenceException("cannot list sessions in " + directory, exception);
+            }
+        }
+    }
+
     private List<String> readLines(SessionId sessionId) throws IOException {
         Path file = fileFor(sessionId);
         if (!Files.exists(file)) {
